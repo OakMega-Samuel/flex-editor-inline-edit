@@ -81,8 +81,6 @@ function renderImagemapBody(msg, body) {
       </div>
     </div>
 
-    <div class="content-divider"></div>
-
     <div class="body-row im-body-row">
 
       <div class="preview-pane im-preview-pane">

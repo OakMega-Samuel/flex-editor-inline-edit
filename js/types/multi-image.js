@@ -63,8 +63,6 @@ const MULTI_IMAGE_TEMPLATE = `
     </div>
   </div>
 
-  <div class="content-divider"></div>
-
   <div class="body-row">
     <div class="preview-pane">
       <div class="bubble">

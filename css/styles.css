@@ -3498,8 +3498,8 @@ body { padding-right: 400px; }
 }
 .msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-alt-section { padding-top: 16px; }
 .msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-page-section { padding-top: 12px; padding-bottom: 12px; }
-.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .content-divider { margin: 0; }
 .msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .body-row { padding: 16px; gap: 20px; }
+.msg-card.initial-guide[data-type="carousel-v4"] .preview-pane .bubble { min-height: 300px; }
 
 /* ---- v4 form-line: shared label + control layout. Two variants: row (default)
    and stacked (label on top, control below). ---- */

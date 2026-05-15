@@ -65,8 +65,6 @@ const CAROUSEL_V4_TEMPLATE = `
     </div>
   </div>
 
-  <div class="content-divider"></div>
-
   <div class="body-row">
     <div class="preview-pane">
       <div class="bubble">
