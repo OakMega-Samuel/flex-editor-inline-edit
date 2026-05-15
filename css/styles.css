@@ -1,0 +1,4942 @@
+:root {
+  --bg: #f4f5f7;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #eef1f6;
+  --border: #b6bcc7;
+  --border-soft: #e5e8ef;
+  --border-strong: #b6bcc7;
+  --text-1: #17233c;
+  --text-2: #4f5a6d;
+  --text-3: #6e7887;
+  --text-placeholder: #9199a6;
+  --accent: #815fe5;
+  --accent-soft: rgba(129, 95, 229, 0.10);
+  --danger: #ef4444;
+
+  --bubble-text-muted: #707070;
+
+  --bubble-width: 300px;
+  --top-gap: 12px;
+  --btn-height: 36px;
+  --btn-gap: 8px;
+  --tab-height: 36px;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+
+  --shadow-xs: 0 1px 2px rgba(24, 39, 75, 0.08);
+  --shadow-sm: 0 0 4px rgba(24, 39, 75, 0.06), 0 4px 6px -4px rgba(24, 39, 75, 0.12);
+  --shadow-md: 0 1px 4px rgba(24, 39, 75, 0.08), 0 4px 8px -2px rgba(24, 39, 75, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input { font-family: inherit; }
+
+html, body { background: #f4f5f7; }
+
+/* Reserve right-side space for the fixed preview sidebar so the auto-centered
+   editor below doesn't slide under it. */
+body { padding-right: 400px; }
+
+.app {
+  max-width: 800px;
+  margin: 16px auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== RIGHT PREVIEW SIDEBAR ===== */
+.preview-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid var(--border-soft);
+  box-shadow: -4px 0 16px -8px rgba(24, 39, 75, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+.preview-sidebar-title {
+  flex-shrink: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+  border-bottom: 1px solid var(--border-soft);
+  letter-spacing: 0.02em;
+}
+.preview-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f4f5f7;
+}
+.preview-list::-webkit-scrollbar { width: 8px; }
+.preview-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+.preview-list::-webkit-scrollbar-track { background: transparent; }
+
+.preview-empty {
+  color: var(--text-placeholder);
+  font-size: 13px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* ----- Text bubble (no left-side preview to mirror — sized for sidebar) ----- */
+.pv-bubble {
+  align-self: flex-start;
+  background: #eaeaea;
+  border-radius: 17px;
+  overflow: hidden;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: #333;
+  position: relative;
+}
+.pv-bubble-text {
+  width: 248px;
+  padding: 12px;
+}
+.pv-text-content {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 22px;
+}
+.pv-text-content.is-empty { color: #999; }
+.pv-text-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+  color: #707070;
+  font-size: 12px;
+  line-height: 18px;
+}
+.pv-text-footer svg { display: block; opacity: 0.7; }
+.pv-text-footer .pv-count { color: #707070; }
+
+/* ----- Image / video bubble: 192px wide, natural height (no cropping) ----- */
+.pv-bubble-media {
+  width: 192px;
+  background: transparent;
+  border-radius: 17px;
+  overflow: hidden;
+}
+.pv-bubble-media .pv-media {
+  width: 100%;
+  display: block;
+  position: relative;
+  background: #d9d9d9;
+  border-radius: 17px;
+  overflow: hidden;
+}
+.pv-bubble-media .pv-media img,
+.pv-bubble-media .pv-media video {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+/* Empty placeholder keeps a square so the bubble has a sensible footprint. */
+.pv-bubble-media .pv-media.empty { aspect-ratio: 1 / 1; }
+.pv-media-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #8a8a92;
+}
+.pv-media-placeholder svg { width: 56px; height: 56px; opacity: 0.7; }
+.pv-media-placeholder span { font-size: 13px; letter-spacing: 0.02em; }
+
+/* ----- Audio: simple LINE-style bubble around an <audio> element ----- */
+.pv-bubble-audio {
+  width: 248px;
+  padding: 10px 12px;
+}
+.pv-bubble-audio audio {
+  width: 100%;
+  height: 36px;
+  display: block;
+}
+.pv-audio-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #707070;
+  font-size: 13px;
+}
+.pv-audio-placeholder svg { width: 20px; height: 20px; opacity: 0.7; }
+
+/* ----- Sticker: 192px wide, bare emoji ----- */
+.pv-sticker {
+  align-self: flex-start;
+  width: 192px;
+  font-size: 140px;
+  line-height: 1;
+  padding: 4px 0;
+}
+.pv-sticker.empty {
+  font-size: 13px;
+  color: var(--text-placeholder);
+  background: #eaeaea;
+  border-radius: 12px;
+  padding: 16px 18px;
+  text-align: center;
+}
+
+/* ----- Carousel / multi-image: cloned editor `.bubble`. 300px wide; layout
+   inherits from the existing `.bubble` rules so it reads identically to the
+   left-side preview. `pointer-events: none` blocks both interaction and the
+   `.bubble:hover ...` add-button reveals. ----- */
+.preview-clone {
+  align-self: flex-start;
+  width: 300px;
+  pointer-events: none;
+  user-select: none;
+}
+.preview-clone .bubble {
+  width: 300px;
+  box-shadow: none;
+}
+/* Belt-and-braces: even if pointer-events were ever bypassed, keep the
+   collapsed-by-default add hosts collapsed inside the clone. */
+.preview-clone .image-add-host,
+.preview-clone .promo-add-host,
+.preview-clone .btn-add-wrap,
+.preview-clone .bubble-body.empty {
+  display: none !important;
+}
+
+.body-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  align-items: flex-start;
+}
+
+/* HEADER */
+.header-band {
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.header-title {
+  flex: 1;
+  margin: 0;
+  padding: 0 0 0 21px;
+  list-style: decimal;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-title li::marker { font-weight: 500; }
+.header-actions {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.header-icon-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  border-radius: 8px;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.header-icon-btn:hover { background: rgba(0, 0, 0, 0.05); }
+
+/* TABS BAND (pagination + alt input) */
+.tabs-band {
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.tabs-band-l {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.tabs-band-r {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.alt-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+.alt-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.alt-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.alt-input-wrap .alt-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  padding: 0;
+  height: 22px;
+}
+.alt-input-wrap .alt-input::placeholder { color: var(--text-placeholder); }
+.alt-counter {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  flex-shrink: 0;
+  padding-right: 4px;
+}
+.alt-counter .alt-count { color: var(--accent); }
+.alt-counter .sep { color: var(--text-2); margin: 0 1px; }
+.alt-counter .max { color: var(--text-2); }
+
+/* CONTENT DIVIDER */
+.content-divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 0 12px;
+}
+
+.page-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+}
+
+.page-tab {
+  position: relative;
+  height: var(--tab-height);
+  min-width: var(--tab-height);
+  padding: 0 12px;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.page-tab:hover:not(.active) { background: rgba(0, 0, 0, 0.04); }
+.page-tab.active { background: var(--accent); color: white; }
+.page-tab.dragging { opacity: 0.4; }
+.page-tab.drag-over-left { box-shadow: -2px 0 0 var(--accent); }
+.page-tab.drag-over-right { box-shadow: 2px 0 0 var(--accent); }
+
+.page-tab .tab-close {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-1);
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  z-index: 2;
+  border: 1.5px solid var(--surface-1);
+}
+.page-tab:hover .tab-close { display: flex; }
+.page-tab .tab-close:hover { background: var(--danger); }
+
+.page-tab-add {
+  height: var(--tab-height);
+  min-width: var(--tab-height);
+  padding: 0 8px;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.page-tab-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ===== LEFT PREVIEW ===== */
+.preview-pane {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.bubble {
+  flex-shrink: 0;
+  width: var(--bubble-width);
+  background: #ffffff;  /* set dynamically by JS */
+  border: 1px solid #ebebeb;
+  border-radius: 17px;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: #333333;
+  box-shadow: 0 1px 4px rgba(24, 39, 75, 0.08), 0 4px 8px -2px rgba(24, 39, 75, 0.12);
+}
+
+/* Initial empty state — match Figma editor card look */
+.msg-card.initial-guide .bubble {
+  border-radius: 8px;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.msg-card.initial-guide .image-section {
+  background: #ffffff;
+  filter: drop-shadow(0 1px 1px rgba(24, 39, 75, 0.08));
+  position: relative;
+  z-index: 1;
+}
+.msg-card.initial-guide .body-section {
+  position: relative;
+}
+.msg-card.initial-guide .body-section::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: var(--border-soft);
+  margin: 0 8px;
+}
+
+/* ===== RIGHT EDITOR ===== */
+.editor-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Color row: small swatch + label inside a bordered card */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 5px 12px 5px 5px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  align-self: flex-start;
+}
+.color-row .color-row-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+}
+
+/* ============================
+   IMAGE
+   ============================ */
+.image-section { position: relative; }
+
+.image-add-host {
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  transition: height 0.18s ease, margin 0.18s ease;
+}
+
+.bubble:hover .image-add-host.empty,
+.msg-card.initial-guide .image-add-host.empty {
+  height: 36px;
+  margin: 10px 0;
+}
+
+.image-add-trigger {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 20px);
+  height: 36px;
+  padding: 0 12px;
+  border: 1px dashed var(--add-border, var(--border));
+  border-radius: 8px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--add-fg, var(--text-2));
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.bubble:hover .image-add-host.empty .image-add-trigger,
+.msg-card.initial-guide .image-add-host.empty .image-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.image-add-trigger:hover {
+  border-color: var(--add-hover-border, var(--accent));
+  color: var(--add-hover-fg, var(--accent));
+  background: var(--add-hover-bg, var(--accent-soft));
+}
+
+/* v2: reframe the image-add as an upload-zone — taller, filled background,
+   icon-over-text, always visible (not gated on bubble hover) so the user
+   reads the surface as a drop/upload target rather than a button. */
+.msg-card[data-type="carousel-v2"] .image-add-host.empty {
+  height: 64px;
+  margin: 10px 0;
+}
+.msg-card[data-type="carousel-v2"] .image-add-trigger {
+  height: 64px;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  background: var(--surface-3);
+  border-color: var(--border-soft);
+  opacity: 1;
+  pointer-events: auto;
+}
+.msg-card[data-type="carousel-v2"] .image-add-trigger svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+.msg-card[data-type="carousel-v2"] .image-add-trigger:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.image-type-menu, .body-add-menu {
+  position: absolute;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 200;
+  min-width: 140px;
+  display: none;
+}
+.image-type-menu.open, .body-add-menu.open { display: block; }
+.image-type-menu .menu-item, .body-add-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-1);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.image-type-menu .menu-item:hover, .body-add-menu .menu-item:hover:not(.disabled) { background: var(--surface-3); }
+.body-add-menu .menu-item.disabled { color: var(--text-placeholder); cursor: not-allowed; }
+
+.bubble-hero { width: 100%; position: relative; overflow: hidden; }
+.bubble-hero img { width: 100%; height: auto; display: block; }
+
+.bubble-hero .promo-banner {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  max-width: calc(100% - 28px);
+  z-index: 2;
+}
+
+.bubble-hero .promo-banner .promo-text {
+  outline: none;
+  min-width: 4px;
+  word-break: break-word;
+  cursor: text;
+}
+.bubble-hero .promo-banner .promo-text[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Delete floats to the right of the banner, hover-only */
+.bubble-hero .promo-banner .promo-delete {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 4px);
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 3;
+}
+.bubble-hero .promo-banner .promo-delete:hover { background: var(--danger); }
+
+.bubble-hero:hover .promo-banner .promo-delete,
+.bubble-hero .promo-banner:focus-within .promo-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Promo add trigger — hover to reveal "+ 新增宣傳標語" inside hero */
+.promo-add-host {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  height: 0;
+  z-index: 2;
+  transition: height 0.18s ease;
+}
+.bubble:hover .promo-add-host.empty {
+  height: 24px;
+}
+.promo-add-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, background 0.15s, border-color 0.15s;
+  backdrop-filter: blur(6px);
+}
+.bubble:hover .promo-add-host.empty .promo-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+.promo-add-trigger:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: white;
+}
+
+.bubble-hero .hero-controls {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+.bubble-hero:hover .hero-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hero-control-btn {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+.hero-control-btn:hover { background: rgba(0, 0, 0, 0.85); }
+.hero-control-btn.danger:hover { background: rgba(239, 68, 68, 0.85); }
+
+.bubble-hero .anim-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.65);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ============================
+   BODY
+   ============================ */
+.body-section { position: relative; }
+
+.bubble-body { position: relative; }
+.bubble-body.has-content { padding: 20px 20px 10px; }
+
+.bubble-body.empty {
+  height: 0;
+  padding: 0;
+  overflow: visible;
+  transition: height 0.18s ease, padding 0.18s ease;
+}
+
+.bubble:hover .bubble-body.empty,
+.msg-card.initial-guide .bubble-body.empty {
+  height: 56px;
+  padding: 10px;
+}
+
+.body-add-trigger {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 20px);
+  height: 36px;
+  padding: 0 12px;
+  border: 1px dashed var(--add-border, var(--border));
+  border-radius: 8px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--add-fg, var(--text-2));
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.bubble:hover .bubble-body.empty .body-add-trigger,
+.msg-card.initial-guide .bubble-body.empty .body-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.body-add-trigger:hover {
+  border-color: var(--add-hover-border, var(--accent));
+  color: var(--add-hover-fg, var(--accent));
+  background: var(--add-hover-bg, var(--accent-soft));
+}
+
+.body-field { position: relative; }
+.body-field + .body-field { margin-top: 6px; }
+
+.bubble-title, .bubble-desc, .bubble-price {
+  outline: none;
+  width: 100%;
+  word-break: break-word;
+  cursor: text;
+  border-radius: 3px;
+  padding: 1px 2px;
+  margin: -1px -2px;
+  transition: background 0.1s;
+}
+
+.bubble-title:hover, .bubble-desc:hover, .bubble-price:hover {
+  background: rgba(108,92,231,0.05);
+}
+.bubble-title:focus, .bubble-desc:focus, .bubble-price:focus {
+  background: rgba(108,92,231,0.08);
+  box-shadow: inset 0 0 0 1px rgba(108,92,231,0.4);
+}
+
+.bubble-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: #333;
+  padding-bottom: 12px;
+}
+.bubble-desc {
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: #333;
+  opacity: 0.7;
+}
+.bubble-price {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: #333;
+  text-align: right;
+}
+
+.bubble-title.is-empty::before,
+.bubble-desc.is-empty::before,
+.bubble-price.is-empty::before {
+  content: attr(data-placeholder);
+  color: #c4c4c8;
+  pointer-events: none;
+}
+
+.body-field .field-delete {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  z-index: 3;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.body-field:hover .field-delete { display: flex; }
+.body-field .field-delete:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+.body-inline-add {
+  width: 100%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--add-fg, #9aa0a8);
+  border: 1px dashed transparent;
+  cursor: pointer;
+  transition: all 0.18s, opacity 0.18s, max-height 0.18s, margin-top 0.18s, padding 0.18s;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+  padding: 0;
+}
+
+.bubble:hover .bubble-body.has-content .body-inline-add {
+  opacity: 1;
+  max-height: 30px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border-color: var(--add-border, #d4d4d8);
+  border-radius: 5px;
+}
+
+.body-inline-add:hover {
+  border-color: var(--add-hover-border, var(--accent));
+  color: var(--add-hover-fg, var(--accent));
+  background: var(--add-hover-bg, var(--accent-soft));
+}
+
+/* v2 only: ghost row for a still-null body field. The wrap is the click
+   target — the inner field div is non-interactive (pointer-events: none) so
+   the click always lands on the wrap regardless of whether the cursor is
+   over the placeholder text. Hover surfaces the same affordance the legacy
+   add-trigger used to: dashed accent border + soft accent background +
+   placeholder color shifts to the accent. */
+.body-field-ghost {
+  cursor: pointer;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  margin-left: -3px;
+  margin-right: -3px;
+  padding-left: 1px;
+  padding-right: 1px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.body-field-ghost > * {
+  pointer-events: none;
+}
+.body-field-ghost:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.body-field-ghost:hover .bubble-title.is-empty::before,
+.body-field-ghost:hover .bubble-desc.is-empty::before,
+.body-field-ghost:hover .bubble-price.is-empty::before {
+  color: var(--accent);
+}
+
+/* Mixed mode (some fields filled, some null) — hide the ghost rows when the
+   bubble isn't hovered so a populated card reads cleanly. The all-null
+   initial state doesn't get .v2-mixed, so its ghosts stay fully visible.
+   Selector specificity beats `.body-field + .body-field { margin-top: 6px }`
+   so the collapse / expand transition can drive margin-top too. */
+.bubble-body.v2-mixed .body-field-ghost {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-color: transparent;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, max-height 0.18s ease, margin-top 0.18s ease;
+}
+.bubble:hover .bubble-body.v2-mixed .body-field-ghost,
+.app.bco-active .bubble-body.v2-mixed .body-field-ghost {
+  max-height: 80px;
+  opacity: 1;
+  margin-top: 6px;
+  pointer-events: auto;
+}
+.bubble:hover .bubble-body.v2-mixed .body-field-ghost:first-child,
+.app.bco-active .bubble-body.v2-mixed .body-field-ghost:first-child {
+  margin-top: 0;
+}
+/* When a ghost (now collapsed) precedes a filled field, the filled field
+   would otherwise inherit `body-field + body-field { margin-top: 6px }` and
+   leave a phantom gap above itself. Zero it while the ghost is hidden;
+   restore it when hover re-expands the ghost. */
+.bubble-body.v2-mixed .body-field-ghost + .body-field {
+  margin-top: 0;
+  transition: margin-top 0.18s ease;
+}
+.bubble:hover .bubble-body.v2-mixed .body-field-ghost + .body-field,
+.app.bco-active .bubble-body.v2-mixed .body-field-ghost + .body-field {
+  margin-top: 6px;
+}
+
+/* ============================
+   BUTTONS
+   ============================ */
+.buttons-section { position: relative; }
+
+.bubble-footer {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--btn-gap);
+}
+.bubble-footer:not(.no-buttons)::before {
+  content: '';
+  display: block;
+  height: 1px;
+  background: #333;
+  opacity: 0.5;
+  margin-bottom: 0;
+}
+
+.bubble-footer:empty { padding: 0; }
+
+.bubble-button {
+  position: relative;
+  background: #000000;
+  color: #ffffff;
+  padding: 10px 12px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: center;
+  cursor: text;
+  outline: none;
+  user-select: text;
+  word-break: break-word;
+  transition: filter 0.12s, box-shadow 0.12s;
+}
+
+.bubble-button:hover { filter: brightness(1.08); }
+.bubble-button:focus-within { box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bubble-bg, white); }
+
+.bubble-button-text {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  outline: none;
+  cursor: text;
+  user-select: text;
+  word-break: break-word;
+}
+
+.bubble-button.empty-text::before {
+  content: '輸入按鈕文字';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.bubble-button.dragging { opacity: 0.4; }
+.bubble-button.drag-over-top { box-shadow: 0 -2px 0 var(--accent); }
+.bubble-button.drag-over-bot { box-shadow: 0 2px 0 var(--accent); }
+
+.bubble-button .btn-delete {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.18);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.9);
+  z-index: 2;
+}
+.bubble-button:hover .btn-delete { display: flex; }
+.bubble-button .btn-delete:hover { background: rgba(239,68,68,0.9); color: white; }
+
+.bubble-button .drag-handle {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  width: 16px; height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.55);
+  cursor: grab;
+}
+.bubble-button:hover .drag-handle { display: flex; }
+.bubble-button .drag-handle:active { cursor: grabbing; }
+
+.btn-add-wrap {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.18s ease, margin-top 0.18s ease, opacity 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.bubble:hover .btn-add-wrap.has-buttons {
+  height: var(--btn-height);
+  margin-top: var(--btn-gap);
+  opacity: 1;
+}
+
+.bubble:hover .btn-add-wrap.no-buttons,
+.msg-card.initial-guide .btn-add-wrap.no-buttons {
+  height: var(--btn-height);
+  opacity: 1;
+}
+
+.bubble-footer.no-buttons {
+  padding: 0;
+  transition: padding 0.18s ease;
+}
+
+.bubble:hover .bubble-footer.no-buttons,
+.msg-card.initial-guide .bubble-footer.no-buttons {
+  padding: 10px;
+}
+
+.btn-add {
+  width: 100%;
+  height: var(--btn-height);
+  padding: 0 12px;
+  border: 1px dashed var(--add-border, var(--border));
+  border-radius: 8px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--add-fg, var(--text-2));
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.btn-add:hover {
+  border-color: var(--add-hover-border, var(--accent));
+  color: var(--add-hover-fg, var(--accent));
+  background: var(--add-hover-bg, var(--accent-soft));
+}
+
+/* Right side button list */
+.button-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.button-item {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.button-item .btn-card-header {
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button-item .btn-card-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.button-item .btn-card-title .btn-index {
+  flex-shrink: 0;
+  color: var(--text-1);
+}
+.button-item .btn-card-title .btn-text-preview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.button-item .btn-card-title .btn-text-preview.is-empty {
+  color: var(--text-placeholder);
+}
+
+.button-item .btn-card-body {
+  padding: 12px;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.button-item .btn-action-select {
+  width: auto;
+  min-width: 76px;
+  font-size: 14px;
+  padding: 0 32px 0 12px;
+  height: 36px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.button-item .btn-value-input {
+  font-size: 14px;
+  padding: 0 12px;
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+}
+
+.button-item .btn-card-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  transition: background 0.12s, color 0.12s;
+}
+.button-item .btn-card-delete:hover { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+/* Inputs */
+.text-input, .select-input {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-1);
+  font-size: 12px;
+  outline: none;
+  transition: all 0.15s;
+  min-width: 0;
+  width: 100%;
+}
+.text-input:hover, .select-input:hover { border-color: var(--border-strong); }
+.text-input:focus, .select-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.text-input::placeholder { color: var(--text-placeholder); }
+.select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3e%3cpath fill='none' stroke='%238b909a' stroke-width='1.5' d='M2 4l3 3 3-3'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  padding-right: 26px;
+  cursor: pointer;
+}
+
+/* ===== COMBO SWATCH (bg + fg combined) ===== */
+.combo-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: 'Noto Sans TC', sans-serif;
+  user-select: none;
+  /* background and color set inline */
+}
+
+.combo-swatch:hover { transform: scale(1.06); border-color: var(--text-3); }
+
+.combo-swatch.combo-swatch-sm {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.combo-swatch.combo-swatch-md {
+  width: var(--tab-height);
+  height: var(--tab-height);
+  font-size: 14px;
+}
+
+.combo-swatch.combo-swatch-xs {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 4px;
+}
+
+/* ===== Color popover (combo) ===== */
+.popover {
+  position: absolute;
+  z-index: 100;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.04);
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
+  display: none;
+}
+.popover.open { display: block; animation: popIn 0.12s ease-out; }
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popover-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 12px;
+}
+
+/* Button-specific fields (action + value) shown inside the popover when
+   opened from a focused .bubble-button — kept in sync with the right card */
+.popover-button-fields {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.popover-button-fields[hidden] { display: none; }
+.popover-button-fields #popoverActionSelect {
+  width: auto;
+  min-width: 76px;
+  font-size: 14px;
+  padding: 0 32px 0 12px;
+  height: 36px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.popover-button-fields #popoverValueInput {
+  font-size: 14px;
+  padding: 0 12px;
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Combo presets - 2 rows × 6 columns of circles */
+.combo-presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.combo-preset {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: 'Noto Sans TC', sans-serif;
+  user-select: none;
+}
+.combo-preset:hover { transform: scale(1.08); }
+.combo-preset.selected {
+  border-color: var(--text-1);
+  box-shadow: 0 0 0 2px var(--surface-1);
+}
+
+/* Recent combos — same swatches, separate row */
+.combo-recents-wrap { margin-bottom: 14px; }
+.combo-recents-wrap[hidden] { display: none; }
+.popover-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.combo-recents {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+/* Color custom inputs (text/bg side by side) */
+.combo-customs {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+}
+
+.combo-swap-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+  padding: 0;
+}
+.combo-swap-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.combo-swap-btn:active { transform: scale(0.95); }
+
+.combo-custom-block { min-width: 0; }
+
+.combo-custom-block .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.combo-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 6px;
+  background: var(--surface-1);
+  min-width: 0;
+  width: 100%;
+}
+
+.combo-custom-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.combo-custom-input .native-color-input {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.combo-custom-input .native-color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.combo-custom-input .native-color-input::-webkit-color-swatch {
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+}
+
+.combo-custom-input .hex-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-1);
+  min-width: 0;
+  padding: 0;
+}
+
+.popover-backdrop { position: fixed; inset: 0; z-index: 99; display: none; }
+.popover-backdrop.open { display: block; }
+
+/* ===== Pin bubble hover affordances while inline color overlay is open ===== */
+/* Mirrors the same expansions as .bubble:hover so cursor moving onto the
+   popover doesn't collapse the empty add-zones / footer padding. */
+.app.bco-active .image-add-host.empty {
+  height: 36px;
+  margin: 10px 0;
+}
+.app.bco-active .image-add-host.empty .image-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app.bco-active .promo-add-host.empty {
+  height: 24px;
+}
+.app.bco-active .promo-add-host.empty .promo-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app.bco-active .bubble-body.empty {
+  height: 56px;
+  padding: 10px;
+}
+.app.bco-active .bubble-body.empty .body-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app.bco-active .bubble-body.has-content .body-inline-add {
+  opacity: 1;
+  max-height: 30px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border-color: var(--add-border, var(--border));
+  border-radius: 5px;
+}
+.app.bco-active .btn-add-wrap.has-buttons {
+  height: var(--btn-height);
+  margin-top: var(--btn-gap);
+  opacity: 1;
+}
+.app.bco-active .btn-add-wrap.no-buttons {
+  height: var(--btn-height);
+  opacity: 1;
+}
+.app.bco-active .bubble-footer.no-buttons {
+  padding: 10px;
+}
+
+.hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-1);
+  color: var(--surface-1);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.hint.show { opacity: 1; }
+
+/* ===== NARROW (< 400px) ===== */
+@media (max-width: 399.98px) {
+  .app { margin: 0; padding: 12px; }
+
+  .msg-card[data-type="carousel"] .tabs-band,
+  .msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .tabs-band,
+  .msg-card[data-type="multi-image"] .tabs-band { flex-direction: column; }
+  .msg-card[data-type="carousel"] .tabs-band-l,
+  .msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .tabs-band-l,
+  .msg-card[data-type="multi-image"] .tabs-band-l { width: 100%; }
+
+  .msg-card[data-type="carousel"] .body-row,
+  .msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .body-row,
+  .msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .body-row { flex-direction: column; }
+  .msg-card[data-type="carousel"] .preview-pane,
+  .msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .preview-pane,
+  .msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .preview-pane { width: 100%; align-items: center; }
+  .msg-card[data-type="carousel"] .editor-pane,
+  .msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .editor-pane,
+  .msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane { width: 100%; }
+}
+
+/* Carousel v1/v2: stack preview above editor when the card itself is narrow,
+   regardless of viewport width. */
+.msg-card:is([data-type="carousel"], [data-type="carousel-v2"]) {
+  container-type: inline-size;
+}
+@container (max-width: 639.98px) {
+  .msg-card:is([data-type="carousel"], [data-type="carousel-v2"]) .body-row {
+    flex-direction: column;
+  }
+  .msg-card:is([data-type="carousel"], [data-type="carousel-v2"]) .preview-pane {
+    width: 100%;
+    align-items: center;
+  }
+  .msg-card:is([data-type="carousel"], [data-type="carousel-v2"]) .editor-pane {
+    width: 100%;
+  }
+}
+
+/* ============================
+   MULTI-MESSAGE CARDS (outer)
+   ============================ */
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.msg-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.msg-card-header {
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.msg-card-title {
+  flex: 1;
+  margin: 0;
+  padding: 0 8px;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msg-card-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  height: 20px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.msg-card-actions {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.msg-card-action-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  border-radius: 8px;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.msg-card-action-btn:hover { background: rgba(0, 0, 0, 0.05); }
+.msg-card-action-btn:disabled { color: var(--text-placeholder); cursor: default; }
+.msg-card-action-btn:disabled:hover { background: transparent; }
+.msg-card-action-btn.danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+.msg-card-body {
+  padding: 12px;
+}
+
+.msg-card.collapsed .msg-card-body { display: none; }
+
+/* ── Add-message panel (always-visible, bottom of editor) ── */
+.add-msg-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 16px 20px 20px;
+}
+
+.add-msg-panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-placeholder);
+  margin-bottom: 12px;
+}
+
+.add-msg-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.add-msg-card {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  user-select: none;
+}
+.add-msg-card:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+.add-msg-card:active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.add-msg-card svg {
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.add-msg-card span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+.add-msg-card.archived svg,
+.add-msg-card.archived span {
+  color: var(--text-placeholder);
+}
+.add-msg-archived-tag {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-placeholder);
+  background: var(--surface-3);
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.5;
+}
+
+/* Message-type picker menu reuses .image-type-menu visual style */
+.message-type-menu {
+  position: absolute;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 200;
+  min-width: 160px;
+  display: none;
+}
+.message-type-menu.open { display: block; }
+.message-type-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-1);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.message-type-menu .menu-item:hover { background: var(--surface-3); }
+.message-type-menu .menu-item.archived { color: var(--text-placeholder); }
+.message-type-menu .menu-item.archived:hover { background: var(--surface-3); }
+.archived-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-placeholder);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 0.02em;
+}
+
+/* ============================
+   TYPE: TEXT
+   ============================ */
+.msg-text-body { display: flex; flex-direction: column; }
+.msg-text-input-wrap {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  box-shadow: 0px 1px 2px 0px rgba(24, 39, 75, 0.08);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.msg-text-area {
+  width: 100%;
+  min-height: 88px;
+  padding: 7px 12px 4px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.28px;
+  color: var(--text-1);
+  outline: none;
+  resize: none;
+  display: block;
+}
+.msg-text-area::placeholder { color: var(--text-placeholder); }
+.msg-text-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 4px 4px;
+  gap: 8px;
+}
+.msg-text-fns {
+  display: flex;
+  align-items: center;
+}
+.msg-text-fn-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-2);
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.msg-text-fn-btn:hover { background: var(--surface-2); color: var(--text-1); }
+.msg-text-counter {
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.28px;
+  color: var(--text-2);
+}
+.msg-text-counter .count { color: var(--accent); }
+.msg-text-counter .sep,
+.msg-text-counter .max { color: var(--text-2); }
+
+/* ============================
+   TYPE: IMAGE / VIDEO / AUDIO / STICKER (shared upload-style)
+   ============================ */
+.msg-upload-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Empty state: dashed/clickable upload zone with featured icon + helper text */
+.msg-upload-zone {
+  width: 100%;
+  height: 192px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px;
+  cursor: pointer;
+  transition: background 0.15s, outline-color 0.15s;
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+}
+.msg-upload-zone:hover {
+  background: var(--surface-3);
+}
+.msg-upload-zone.drag-over {
+  background: var(--accent-soft);
+  outline-color: var(--accent);
+}
+.msg-upload-zone .upload-featured-icon {
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border-radius: 28px;
+  background: var(--border-soft);
+  border: 4px solid var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+}
+.msg-upload-zone .upload-featured-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.msg-upload-zone .upload-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--text-placeholder);
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.28px;
+  width: 100%;
+}
+.msg-upload-zone .upload-text .primary { font-weight: 500; }
+.msg-upload-zone .upload-text .secondary { font-weight: 400; }
+
+/* Filled state: preview with floating replace/delete button group on top-left */
+.msg-upload-preview {
+  position: relative;
+  width: 100%;
+  height: 192px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-1);
+}
+.msg-upload-preview img,
+.msg-upload-preview video {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain;
+}
+.msg-upload-preview .msg-upload-sticker {
+  font-size: 96px;
+  line-height: 1;
+  user-select: none;
+}
+.msg-upload-preview .msg-upload-audio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 56px 0 16px;
+  width: 100%;
+}
+.msg-upload-preview .msg-upload-audio audio {
+  width: 100%;
+  max-width: 360px;
+}
+
+.msg-upload-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  filter: drop-shadow(0 1px 1px rgba(24, 39, 75, 0.08));
+  z-index: 2;
+}
+.msg-upload-controls button {
+  width: 36px;
+  height: 36px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text-1);
+  box-shadow: 0 1px 2px rgba(24, 39, 75, 0.08);
+  transition: background 0.15s, color 0.15s;
+}
+.msg-upload-controls button:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.msg-upload-controls button + button {
+  border-left: none;
+}
+.msg-upload-controls button:last-child {
+  border-radius: 0 8px 8px 0;
+}
+.msg-upload-controls button:hover {
+  background: var(--surface-3);
+}
+.msg-upload-controls button.danger:hover {
+  color: var(--danger);
+}
+.msg-upload-controls button svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* ============================
+   TYPE: STICKER (popover grid only; trigger uses shared .msg-upload-* styles)
+   ============================ */
+.sticker-popover {
+  position: absolute;
+  z-index: 200;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 12px;
+  display: none;
+  width: 360px;
+  max-width: calc(100vw - 16px);
+}
+.sticker-popover.open { display: block; }
+.sticker-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.msg-sticker-cell {
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.12s;
+  user-select: none;
+  padding: 0;
+  font-family: inherit;
+}
+.msg-sticker-cell:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.05);
+}
+.msg-sticker-cell.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* ============================
+   CAROUSEL (scoped to its card)
+   ============================ */
+.msg-card[data-type="carousel"] .msg-card-body,
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .msg-card-body,
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .msg-card-body { padding: 0; }
+.msg-card[data-type="carousel"] .tabs-band,
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .tabs-band,
+.msg-card[data-type="multi-image"] .tabs-band { padding: 12px; }
+.msg-card[data-type="carousel"] .body-row,
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .body-row,
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .body-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  align-items: flex-start;
+}
+.msg-card[data-type="carousel"] .content-divider,
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .content-divider,
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .content-divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 0 12px;
+}
+
+/* ============================
+   CAROUSEL V2 — accordion editor
+   ============================ */
+.editor-pane-v2 {
+  gap: 20px;
+}
+
+.acc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acc-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.acc-item {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.acc-item.open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.acc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+  background: transparent;
+  text-align: left;
+}
+
+.acc-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.acc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acc-title.is-empty { color: var(--text-placeholder); font-weight: 500; }
+
+.acc-subtitle {
+  font-size: 13px;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* When the header has only a single-line title (like 文字顏色), keep it inline */
+.acc-header > .acc-title:not(.acc-title-block .acc-title) {
+  flex: 1;
+  min-width: 0;
+}
+
+.acc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-1);
+  flex-shrink: 0;
+}
+
+.acc-color-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.acc-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  background: #ffffff;
+}
+
+.acc-tag-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+
+.acc-chevron {
+  color: var(--text-2);
+  transition: transform 0.18s;
+  flex-shrink: 0;
+}
+.acc-item.open .acc-chevron { transform: rotate(180deg); }
+
+/* Smooth open/close: grid-template-rows 0fr → 1fr on .acc-body, with the
+   single .acc-body-inner child providing padding and clipping overflow.
+   Lets sibling accordions cross-fade in height when one closes as another
+   opens. */
+.acc-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s ease;
+}
+.acc-item.open .acc-body { grid-template-rows: 1fr; }
+
+.acc-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+  border-top: 1px solid transparent;
+  transition: padding 0.22s ease, border-top-color 0.22s ease;
+}
+.acc-item.open .acc-body-inner {
+  padding: 14px;
+  border-top-color: var(--border-soft);
+}
+
+/* Inline combo picker (mounted inside an acc-body). Same content as the
+   popover but scaled down so it doesn't dominate the editor pane. */
+.inline-combo-picker {
+  max-width: 320px;
+}
+.inline-combo-picker .combo-presets {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.inline-combo-picker .combo-preset {
+  font-size: 14px;
+}
+.inline-combo-picker .combo-recents-wrap { margin-bottom: 10px; }
+.inline-combo-picker .combo-recents { gap: 6px; }
+.inline-combo-picker .combo-customs { gap: 8px; }
+.inline-combo-picker .combo-custom-block .label { font-size: 11px; margin-bottom: 4px; }
+
+.acc-field + .acc-field { margin-top: 12px; }
+
+.acc-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+
+.acc-field-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.acc-field-row .btn-action-select {
+  width: auto;
+  min-width: 76px;
+  font-size: 14px;
+  padding: 0 32px 0 12px;
+  height: 36px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.acc-field-row .btn-value-input,
+.acc-field .acc-btn-text {
+  font-size: 14px;
+  padding: 0 12px;
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+}
+
+.acc-field-delete {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-acc-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: transparent;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-acc-delete:hover { background: rgba(239, 68, 68, 0.10); color: var(--danger); }
+
+/* ----- Inline single-color picker (cardText / cardBg) ----- */
+.color-picker-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.color-picker-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+
+.color-presets-row {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+}
+
+.color-preset {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  position: relative;
+}
+.color-preset:hover { transform: scale(1.08); }
+.color-preset.selected {
+  box-shadow: 0 0 0 2px var(--text-1), 0 0 0 4px var(--surface-1);
+}
+
+.hex-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.hex-input-row:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.hex-input-row .hex-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.hex-input-row .hex-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--text-1);
+  min-width: 0;
+  padding: 0;
+}
+
+/* ----- "+ 新增按鈕" trigger in v2 right pane ----- */
+.btn-add-v2 {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-add-v2:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ----- v2 button accordion (右側 動作按鈕設定) -----
+   Per Figma 5383:21513: items share one outer rounded container with
+   internal border-bottom dividers (no per-item border/radius/gap). The body
+   gets a soft gray fill so the open panel contrasts against the white
+   header strip.
+
+   All rules below are scoped to `.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"])` so the
+   multi-image variant (which also uses `.btn-acc-list` / `.btn-acc-item`)
+   keeps its existing v1-style appearance. */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+/* Avoid showing an empty bordered shell when the user has zero buttons. */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-list:empty { display: none; }
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-list .btn-acc-item {
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-soft);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-list .btn-acc-item:last-child { border-bottom: 0; }
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-list .btn-acc-item.open {
+  border-color: var(--border-soft);
+  box-shadow: none;
+}
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-header {
+  align-items: center;
+  padding: 8px 12px;
+  min-height: 64px;
+  gap: 12px;
+}
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item.open .acc-header {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-subtitle.is-empty {
+  color: var(--text-placeholder);
+}
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-1);
+}
+
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-body-inner {
+  background: #f8f9fd;
+  padding: 0 12px;
+  border-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item.open .acc-body-inner {
+  padding: 12px;
+}
+
+/* Text input + X/15 counter (Figma: bg-white, 36px, counter on the right). */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-btn-text {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-btn-text::placeholder {
+  color: var(--text-placeholder);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-counter .acc-count { color: var(--accent); }
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-counter .acc-sep,
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+
+/* Action select + value input on one row (no labels per design). */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-action-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-action-row .btn-action-select {
+  width: auto;
+  min-width: 76px;
+  font-size: 14px;
+  padding: 0 32px 0 12px;
+  height: 36px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .acc-action-row .btn-value-input {
+  font-size: 14px;
+  padding: 0 12px;
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Inline combo picker inside a v2 btn accordion: presets wrap at 256px
+   (6×36 + 5×8 gap), each chip is a 36px circle. Recents (常用) keep their
+   existing functional behavior below the presets — the design only depicts
+   the preset row, but recents reappear as soon as the user picks a custom
+   color, so the feature is preserved without dominating the empty state. */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker {
+  max-width: none;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-presets {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-preset {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: auto;
+  font-size: 14px;
+  font-weight: 400;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-recents-wrap { margin-bottom: 12px; }
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-recents {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+}
+
+/* 文字顏色 / 背景顏色 / swap row — match design's split prefix-swatch input
+   (36px prefix square holding a 26×26 colored chip, divider, hex text). */
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-customs {
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-custom-block .label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-custom-input {
+  height: 36px;
+  padding: 0;
+  gap: 0;
+  border-radius: 8px;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-custom-input .native-color-input {
+  width: 26px;
+  height: 26px;
+  margin: 4px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-custom-input .hex-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-left: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+.msg-card:is([data-type="carousel-v2"], [data-type="carousel-v3"]) .btn-acc-item .inline-combo-picker .combo-swap-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  align-self: flex-end;
+}
+
+/* ============================
+   MULTI-IMAGE — preview (Figma 5369:13768)
+   ============================
+   Bubble keeps its shared chrome (white bg / 17px radius / #ebebeb border /
+   shadow). The image-section is a 1:1 square and the action button is a pill
+   overlay floating inside the bubble bottom — no body section, no per-button
+   divider. */
+
+.msg-card[data-type="multi-image"] .image-section {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  position: relative;
+}
+
+/* Empty state: the upload trigger fills the square instead of the
+   hover-to-expand strip used by carousel cards. */
+.msg-card[data-type="multi-image"] .image-add-host {
+  height: 100%;
+  margin: 0;
+}
+.msg-card[data-type="multi-image"] .bubble:hover .image-add-host.empty,
+.msg-card.initial-guide[data-type="multi-image"] .image-add-host.empty {
+  height: 100%;
+  margin: 0;
+}
+.msg-card[data-type="multi-image"] .image-add-host.empty .image-add-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hero fills the square; image is cover-fit so any aspect ratio crops. */
+.msg-card[data-type="multi-image"] .bubble-hero {
+  width: 100%;
+  height: 100%;
+}
+.msg-card[data-type="multi-image"] .bubble-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Keep hero affordances above the button overlay so hover still works. */
+.msg-card[data-type="multi-image"] .bubble-hero .hero-controls,
+.msg-card[data-type="multi-image"] .bubble-hero .anim-badge {
+  z-index: 5;
+}
+
+/* Action button overlay: absolute pill inside the bubble bottom. The
+   buttons-section is sibling to image-section but anchors against .bubble
+   (which is position: relative). */
+.msg-card[data-type="multi-image"] .buttons-section {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 4;
+}
+.msg-card[data-type="multi-image"] .bubble-footer {
+  padding: 0;
+  display: block;
+}
+.msg-card[data-type="multi-image"] .bubble-footer.no-buttons,
+.msg-card[data-type="multi-image"] .bubble-footer:empty {
+  display: none;
+}
+.msg-card[data-type="multi-image"] .bubble-footer:not(.no-buttons)::before {
+  display: none;
+}
+
+/* Pill button matching Figma I5369:13768;2143:133577. The default semi-
+   transparent white bg is applied by CSS; once the user picks colors,
+   inline styles override (see createMultiImageBubbleButton). */
+.msg-card[data-type="multi-image"] .mi-bubble-button {
+  border-radius: 999px;
+  padding: 10px 12px;
+  min-height: 0;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.5);
+  color: #000000;
+}
+
+/* Trash icon contrast against the light pill bg (carousel default uses
+   light-on-dark, which would vanish here). */
+.msg-card[data-type="multi-image"] .mi-bubble-button .btn-delete {
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(0, 0, 0, 0.85);
+}
+.msg-card[data-type="multi-image"] .mi-bubble-button .btn-delete:hover {
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+}
+
+/* ============================
+   CAROUSEL V3 — right-pane editor (Figma 5383:21384)
+   ============================
+   Adds back image / text / promo editing on the right side. Layout reuses
+   the same .preview-pane / .editor-pane shell as v2; v3-specific elements
+   are scoped under .editor-pane-v3. Button accordion styles are inherited
+   from the v2 rules above (which now match both data-type values via :is()). */
+
+/* Keep header, tabs-band, and left preview visible while right pane scrolls.
+   `overflow: clip` on the card preserves rounded-corner clipping (like
+   `hidden`) without establishing a scroll container — that lets descendant
+   `position: sticky` resolve to the viewport scroll. */
+.msg-card[data-type="carousel-v3"] {
+  overflow: clip;
+  --v3-sticky-header: 36px;
+  --v3-sticky-tabs: 88px;
+}
+.msg-card[data-type="carousel-v3"] .msg-card-header {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--surface-3);
+}
+.msg-card[data-type="carousel-v3"] .tabs-band {
+  position: sticky;
+  top: var(--v3-sticky-header);
+  z-index: 5;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-soft);
+}
+.msg-card[data-type="carousel-v3"] .preview-pane {
+  position: sticky;
+  top: calc(var(--v3-sticky-header) + var(--v3-sticky-tabs));
+  align-self: flex-start;
+  z-index: 4;
+}
+@media (max-width: 399.98px) {
+  .msg-card[data-type="carousel-v3"] .msg-card-header,
+  .msg-card[data-type="carousel-v3"] .tabs-band,
+  .msg-card[data-type="carousel-v3"] .preview-pane {
+    position: static;
+  }
+}
+
+.editor-pane-v3 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.v3-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.v3-section-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+
+/* ----- Image uploader (flat, not an accordion) ----- */
+.v3-image-frame {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+}
+
+.v3-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-image-tool {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+  border: 0;
+  padding: 0;
+}
+.v3-image-tool:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+.v3-image-tool.v3-image-remove:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+.v3-image-tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.v3-image-content {
+  background: var(--surface-1);
+  display: flex;
+  align-items: stretch;
+  height: 156px;
+}
+
+.v3-image-upload {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text-placeholder);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: background 0.12s;
+}
+.v3-image-upload:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.v3-image-upload[hidden] { display: none; }
+
+.v3-image-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e5e8ef;
+  border: 4px solid #eef1f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+.v3-image-upload:hover .v3-image-icon {
+  color: var(--accent);
+}
+
+.v3-image-line1 {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+.v3-image-line2 {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+
+.v3-image-preview {
+  flex: 1;
+  display: block;
+  background: var(--surface-1);
+  min-height: 0;
+}
+.v3-image-preview[hidden] { display: none; }
+.v3-image-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/* ----- Accordion group (one bordered shell wrapping multiple acc-items) ----- */
+.v3-acc-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+
+.v3-acc-group .acc-item.v3-acc-item {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: none;
+}
+.v3-acc-group .acc-item.v3-acc-item:last-child { border-bottom: 0; }
+
+.v3-acc-group .v3-acc-item.open {
+  border-color: var(--border-soft);
+  box-shadow: none;
+}
+
+.v3-acc-group .v3-acc-item .acc-header {
+  align-items: center;
+  padding: 10px 12px;
+  min-height: 64px;
+  gap: 12px;
+}
+.v3-acc-group .v3-acc-item.open .acc-header {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.v3-acc-group .v3-acc-item .acc-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.v3-acc-group .v3-acc-item .acc-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.v3-acc-group .v3-acc-item .acc-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.v3-acc-group .v3-acc-item .acc-subtitle.is-empty {
+  color: var(--text-placeholder);
+}
+.v3-acc-group .v3-acc-item .acc-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-1);
+}
+
+.v3-acc-group .v3-acc-item .acc-body-inner {
+  background: var(--surface-3);
+  padding: 0 12px;
+  border-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v3-acc-group .v3-acc-item.open .acc-body-inner {
+  padding: 12px;
+}
+
+/* Promo accordion body (inactive vs active) */
+.v3-promo-inactive {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.v3-promo-inactive[hidden] { display: none; }
+
+.v3-promo-active[hidden] { display: none; }
+.v3-promo-active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v3-enable-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-xs);
+}
+.v3-enable-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.v3-enable-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.v3-promo-hint {
+  font-size: 12px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+/* Promo input — same shell as v2 acc-btn-text + v3 text rows */
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.editor-pane-v3 .v3-promo-input {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+}
+.editor-pane-v3 .v3-promo-input::placeholder {
+  color: var(--text-placeholder);
+}
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-count { color: var(--accent); }
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-sep,
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+
+/* Field label above the promo input + color picker */
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.editor-pane-v3 .acc-item[data-acc="promo"] .acc-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+
+/* Inline combo picker inside v3 promo accordion — same scaling as v2 */
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker {
+  max-width: none;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-presets {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-preset {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: auto;
+  font-size: 14px;
+  font-weight: 400;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-recents-wrap { margin-bottom: 12px; }
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-recents {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-customs {
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-custom-block .label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-custom-input {
+  height: 36px;
+  padding: 0;
+  gap: 0;
+  border-radius: 8px;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-custom-input .native-color-input {
+  width: 26px;
+  height: 26px;
+  margin: 4px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-custom-input .hex-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-left: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+.editor-pane-v3 :is(.v3-promo-color-host, .v3-card-color-host) .inline-combo-picker .combo-swap-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  align-self: flex-end;
+}
+
+/* Text content rows */
+.v3-text-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.v3-text-rows:empty { display: none; }
+
+.v3-text-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.v3-text-row-label {
+  flex-shrink: 0;
+  width: 56px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+.v3-text-row-input {
+  flex: 1;
+  min-width: 0;
+}
+.v3-text-row .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 6px 8px 6px 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.v3-text-row .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.v3-text-row .v3-text-input {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  min-height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  display: block;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.v3-text-row .v3-text-input::placeholder {
+  color: var(--text-placeholder);
+}
+.v3-text-row .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+  min-height: 22px;
+}
+.v3-text-row .acc-text-counter .acc-count { color: var(--accent); }
+.v3-text-row .acc-text-counter .acc-sep,
+.v3-text-row .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+
+.v3-text-delete {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  padding: 0;
+}
+.v3-text-delete:hover {
+  background: rgba(239, 68, 68, 0.10);
+  color: var(--danger);
+}
+
+.v3-add-field-btn {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.v3-add-field-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* The 動作按鈕 group at the bottom of v3 reuses v2's btn-acc-list visuals
+   (declared above with the :is(...) selector). Just add a small top margin
+   on the "+ 新增按鈕" trigger so it sits below the list. */
+.editor-pane-v3 .btn-add-v2 {
+  margin-top: 8px;
+}
+.editor-pane-v3 .btn-acc-list:empty + .btn-add-v2 {
+  margin-top: 0;
+}
+
+/* ============================
+   V3 BUBBLE — display-only
+   ============================
+   v3's left bubble is preview-only; suppress all the hover affordances that
+   v1/v2 use to surface inline editing (add triggers, delete buttons, hover
+   highlights, text cursors, drag handles). */
+
+/* No add triggers on the bubble — the empty image / promo hosts shouldn't
+   expand on hover, since there's nothing to click. */
+.msg-card[data-type="carousel-v3"] .image-add-host,
+.msg-card[data-type="carousel-v3"] .bubble:hover .image-add-host.empty,
+.msg-card.initial-guide[data-type="carousel-v3"] .image-add-host.empty {
+  height: 0;
+  margin: 0;
+}
+.msg-card[data-type="carousel-v3"] .promo-add-host,
+.msg-card[data-type="carousel-v3"] .bubble:hover .promo-add-host.empty {
+  height: 0;
+}
+
+/* Promo banner is read-only display. */
+.msg-card[data-type="carousel-v3"] .bubble-hero .promo-banner .promo-text {
+  cursor: default;
+}
+
+/* Body fields render as plain divs (no contentEditable, no inline editing
+   affordances). Strip the cursor + hover highlight that suggested editability,
+   and never show empty-state placeholders since v3 only renders filled fields. */
+.msg-card[data-type="carousel-v3"] .bubble-title,
+.msg-card[data-type="carousel-v3"] .bubble-desc,
+.msg-card[data-type="carousel-v3"] .bubble-price {
+  cursor: default;
+}
+.msg-card[data-type="carousel-v3"] .bubble-title:hover,
+.msg-card[data-type="carousel-v3"] .bubble-desc:hover,
+.msg-card[data-type="carousel-v3"] .bubble-price:hover {
+  background: transparent;
+}
+
+/* Bubble buttons are display-only — hide drag handle + delete affordances. */
+.msg-card[data-type="carousel-v3"] .bubble-button {
+  cursor: default;
+}
+.msg-card[data-type="carousel-v3"] .bubble-button:hover {
+  filter: none;
+}
+.msg-card[data-type="carousel-v3"] .bubble-button .drag-handle,
+.msg-card[data-type="carousel-v3"] .bubble-button:hover .drag-handle,
+.msg-card[data-type="carousel-v3"] .bubble-button .btn-delete,
+.msg-card[data-type="carousel-v3"] .bubble-button:hover .btn-delete {
+  display: none;
+}
+.msg-card[data-type="carousel-v3"] .bubble-button-text {
+  cursor: default;
+}
+
+/* No "輸入按鈕文字" placeholder on the bubble — empty buttons render blank
+   (text comes from the right-pane accordion editor, not inline edits). */
+.msg-card[data-type="carousel-v3"] .bubble-button.empty-text::before {
+  content: none;
+}
+
+/* Toggle-anim button shows an "active" tint when imageType === 'animated'. */
+.editor-pane-v3 .v3-image-toggle-anim.is-on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* No bubble-side "+ 新增按鈕" — keep the empty footer fully collapsed even on
+   hover so the bubble doesn't grow vertically when there's nothing to click. */
+.msg-card[data-type="carousel-v3"] .bubble-footer.no-buttons,
+.msg-card[data-type="carousel-v3"] .bubble:hover .bubble-footer.no-buttons,
+.msg-card.initial-guide[data-type="carousel-v3"] .bubble-footer.no-buttons {
+  padding: 0;
+}
+
+/* Empty bubble body should NOT expand on hover (no add trigger lives here in
+   v3 — editing goes through the right pane), so the bubble keeps a constant
+   height regardless of cursor position. */
+.msg-card[data-type="carousel-v3"] .bubble:hover .bubble-body.empty,
+.msg-card.initial-guide[data-type="carousel-v3"] .bubble-body.empty {
+  height: 0;
+  padding: 0;
+}
+
+/* ============================
+   CAROUSEL V4 — Figma 7164:74745
+   ============================
+   New layout: 預覽文字 as a top form-line, page list as a framed section, then
+   the preview + editor row. Editor pane uses a Select Button to choose
+   image type (一般圖片 / 動態圖片) before/after upload, plus the v3 accordions
+   for promo/colors/text, plus a flat "+ 新增動作按鈕" trigger that opens v2
+   button accordions.
+
+   Right-pane-only behavior (bubble is display-only) is shared with v3 via
+   isRightPaneOnlyType() — most disable rules below are extensions of the v3
+   selectors to also cover v4. */
+
+/* ---- Disable-on-bubble rules: extend the v3 set to v4 + multi-image ---- */
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .image-add-host,
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble:hover .image-add-host.empty,
+.msg-card.initial-guide:is([data-type="carousel-v4"], [data-type="multi-image"]) .image-add-host.empty {
+  height: 0;
+  margin: 0;
+}
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .promo-add-host,
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble:hover .promo-add-host.empty {
+  height: 0;
+}
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-hero .promo-banner .promo-text {
+  cursor: default;
+}
+.msg-card[data-type="carousel-v4"] .bubble-title,
+.msg-card[data-type="carousel-v4"] .bubble-desc,
+.msg-card[data-type="carousel-v4"] .bubble-price {
+  cursor: default;
+}
+.msg-card[data-type="carousel-v4"] .bubble-title:hover,
+.msg-card[data-type="carousel-v4"] .bubble-desc:hover,
+.msg-card[data-type="carousel-v4"] .bubble-price:hover {
+  background: transparent;
+}
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button { cursor: default; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button:hover { filter: none; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button .drag-handle,
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button:hover .drag-handle,
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button .btn-delete,
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button:hover .btn-delete {
+  display: none;
+}
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button-text { cursor: default; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .bubble-button.empty-text::before { content: none; }
+.msg-card[data-type="carousel-v4"] .bubble-footer.no-buttons,
+.msg-card[data-type="carousel-v4"] .bubble:hover .bubble-footer.no-buttons,
+.msg-card.initial-guide[data-type="carousel-v4"] .bubble-footer.no-buttons {
+  padding: 0;
+}
+.msg-card[data-type="carousel-v4"] .bubble:hover .bubble-body.empty,
+.msg-card.initial-guide[data-type="carousel-v4"] .bubble-body.empty {
+  height: 0;
+  padding: 0;
+}
+
+/* ---- Card body layout: v4 + multi-image card body use their own padding (the
+   v4 sections manage their own gaps); kill any default tabs-band styling since
+   neither type renders one. ---- */
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .msg-card-body {
+  padding: 0;
+}
+
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-section {
+  padding: 12px 16px 0;
+}
+/* The editor-pane already gets 16px horizontal padding from .body-row, so
+   stripping the .v4-section side padding keeps the accordion + action sections
+   flush with the image form (which isn't wrapped in .v4-section). */
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .v4-section {
+  padding-left: 0;
+  padding-right: 0;
+}
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-alt-section { padding-top: 16px; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-page-section { padding-top: 12px; padding-bottom: 12px; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .content-divider { margin: 0; }
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .body-row { padding: 16px; gap: 20px; }
+
+/* ---- v4 form-line: shared label + control layout. Two variants: row (default)
+   and stacked (label on top, control below). ---- */
+.v4-form-line {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+.v4-form-line.v4-form-line-stack {
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.v4-form-optional {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+}
+
+/* Top 預覽文字 form-line: reuse alt-input shell but stretch to full width
+   and stack with label sitting flush above the input row. */
+.msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .v4-form-line:has(.v4-alt-wrap) {
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-alt-wrap {
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  padding: 7px 12px;
+  align-items: flex-start;
+}
+.v4-alt-wrap .alt-input {
+  width: 100%;
+  height: 22px;
+}
+
+/* ---- Page list (.v4-page-list): bordered framed component with a numbered
+   tabs row, a vertical divider, an inline tool group (delete + duplicate),
+   and a separate trailing add button. Matches Figma 2220:149372. ---- */
+.v4-page-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+.v4-page-list-tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.v4-page-list-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-soft);
+}
+.v4-page-list-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.v4-page-tab {
+  /* Inherits .page-tab styling. Override sizing to 36×36 per design. */
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: var(--surface-1);
+  color: var(--text-1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background 0.12s, color 0.12s;
+}
+.v4-page-tab:hover:not(.active) {
+  background: var(--surface-3);
+}
+.v4-page-tab.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+.v4-page-tab.dragging { opacity: 0.4; }
+.v4-page-tab.drag-over-left { box-shadow: -2px 0 0 var(--accent); }
+.v4-page-tab.drag-over-right { box-shadow: 2px 0 0 var(--accent); }
+
+.v4-page-tool,
+.v4-page-add {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-1);
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+}
+.v4-page-tool:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); }
+.v4-page-tool.v4-page-delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+.v4-page-tool:disabled,
+.v4-page-add:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.v4-page-add {
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-xs);
+  margin-left: 4px;
+}
+.v4-page-add:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---- Editor pane v4 ---- */
+.editor-pane-v4 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Image form-line: label + select-button + image frame stacked. */
+.v4-image-form .select-button { margin-top: 0; }
+
+/* ---- Select Button (reusable segmented control) ---- */
+.select-button {
+  display: inline-flex;
+  width: 100%;
+  align-items: stretch;
+  padding: 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--surface-3);
+}
+.select-button-option {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+.select-button-option:hover:not(.is-selected) {
+  color: var(--text-1);
+}
+.select-button-option.is-selected {
+  background: var(--surface-1);
+  color: var(--text-1);
+  box-shadow: 0 0 2px rgba(24,39,75,0.06), 0 4px 3px rgba(24,39,75,0.12);
+}
+
+/* ---- v4 image frame: mirrors v3-image-frame but no upload icon graphic,
+   tools sit at the top, content below. ---- */
+.v4-image-frame {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+}
+.v4-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+}
+.v4-image-tool {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+  border: 0;
+  padding: 0;
+}
+.v4-image-tool:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); }
+.v4-image-tool.v4-image-remove:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+.v4-image-tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.v4-image-content {
+  background: var(--surface-1);
+  display: flex;
+  align-items: stretch;
+  height: 128px;
+}
+.v4-image-upload {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text-placeholder);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: background 0.12s;
+}
+.v4-image-upload:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.v4-image-upload[hidden] { display: none; }
+.v4-image-line1 {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+.v4-image-line2 {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+.v4-image-preview {
+  flex: 1;
+  display: block;
+  background: var(--surface-1);
+  min-height: 0;
+}
+.v4-image-preview[hidden] { display: none; }
+.v4-image-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/* ---- v4 accordion group: extend v3 styles so the visual is identical ---- */
+.v4-acc-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+.v4-acc-group .acc-item.v4-acc-item {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: none;
+}
+.v4-acc-group .acc-item.v4-acc-item:last-child { border-bottom: 0; }
+.v4-acc-group .v4-acc-item.open {
+  border-color: var(--border-soft);
+  box-shadow: none;
+}
+.v4-acc-group .v4-acc-item .acc-header {
+  align-items: center;
+  padding: 10px 12px;
+  min-height: 64px;
+  gap: 12px;
+}
+.v4-acc-group .v4-acc-item.open .acc-header {
+  border-bottom: 1px solid var(--border-soft);
+}
+.v4-acc-group .v4-acc-item .acc-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+.v4-acc-group .v4-acc-item .acc-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.v4-acc-group .v4-acc-item .acc-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.v4-acc-group .v4-acc-item .acc-subtitle.is-empty {
+  color: var(--text-placeholder);
+}
+.v4-acc-group .v4-acc-item .acc-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-1);
+}
+.v4-acc-group .v4-acc-item .acc-body-inner {
+  background: var(--surface-3);
+  padding: 0 12px;
+  border-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v4-acc-group .v4-acc-item.open .acc-body-inner {
+  padding: 12px;
+}
+
+/* ---- v4 promo accordion input ---- */
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.editor-pane-v4 .v4-promo-input {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+}
+.editor-pane-v4 .v4-promo-input::placeholder { color: var(--text-placeholder); }
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-count { color: var(--accent); }
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-sep,
+.editor-pane-v4 .acc-item[data-acc="promo"] .acc-field .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+
+/* ---- v4 compact color row (Figma 7182:85493) ---- */
+.v4-color-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+.v4-color-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-color-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.v4-color-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.v4-color-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.v4-color-native {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  overflow: hidden;
+}
+.v4-color-native::-webkit-color-swatch-wrapper { padding: 0; }
+.v4-color-native::-webkit-color-swatch { border: 0; border-radius: 3px; }
+.v4-color-native::-moz-color-swatch { border: 0; border-radius: 3px; }
+.v4-color-hex {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  text-transform: uppercase;
+  padding: 0;
+}
+.v4-color-hex::placeholder { color: var(--text-placeholder); }
+.v4-color-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+.v4-color-action-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  border-radius: 8px;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--shadow-xs);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.v4-color-action-btn + .v4-color-action-btn { margin-left: 4px; }
+.v4-color-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.v4-color-action-btn svg { display: block; }
+
+/* ---- v4 text-content rows ---- */
+.v4-text-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v4-text-rows:empty { display: none; }
+
+.v4-text-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-text-row-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.v4-text-row-input {
+  width: 100%;
+}
+.v4-text-row .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 8px 7px 12px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.v4-text-row .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.v4-text-row .v4-text-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  min-height: 22px;
+}
+.v4-text-row .v4-text-input::placeholder { color: var(--text-placeholder); }
+.v4-text-row .acc-text-counter {
+  display: inline-flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+  align-self: flex-end;
+}
+.v4-text-row .acc-text-counter .acc-count { color: var(--accent); }
+.v4-text-row .acc-text-counter .acc-sep,
+.v4-text-row .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+
+/* ---- v4 action button section ---- */
+.v4-action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-action-label { margin-bottom: 0; }
+.v4-action-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.v4-action-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.v4-action-add svg { display: block; }
+
+/* ---- v4 btn-acc-list (reuses v2 styling). Extend the v2 selectors so that
+   the action button accordions inside v4 inherit the same look as v2/v3. ---- */
+.msg-card[data-type="carousel-v4"] .btn-acc-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+  margin-bottom: 0;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-list:empty { display: none; }
+.msg-card[data-type="carousel-v4"] .btn-acc-list .btn-acc-item {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: none;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-list .btn-acc-item:last-child { border-bottom: 0; }
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-header {
+  align-items: center;
+  padding: 10px 12px;
+  min-height: 64px;
+  gap: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item.open .acc-header {
+  border-bottom: 1px solid var(--border-soft);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-subtitle.is-empty {
+  color: var(--text-placeholder);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-1);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-body-inner {
+  background: var(--surface-3);
+  padding: 0 12px;
+  border-top: 0;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item.open .acc-body-inner {
+  padding: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-btn-text {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-btn-text::placeholder { color: var(--text-placeholder); }
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-counter .acc-count { color: var(--accent); }
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-counter .acc-sep,
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-text-counter .acc-max { color: var(--text-2); margin: 0 1px; }
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-action-row .btn-action-select {
+  flex: 0 0 96px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .acc-action-row .btn-value-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Inline combo picker inside v4 btn-acc-item — match v2/v3 scaling */
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker {
+  max-width: none;
+  margin-top: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker .combo-presets {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker .combo-preset {
+  width: 36px;
+  height: 36px;
+  aspect-ratio: auto;
+  font-size: 14px;
+  font-weight: 400;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker .combo-recents-wrap { margin-bottom: 12px; }
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker .combo-recents {
+  display: flex;
+  flex-wrap: wrap;
+  width: 256px;
+  max-width: 100%;
+  gap: 8px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item .inline-combo-picker .combo-customs {
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+/* ---- Responsive: stack preview + editor on narrow widths (v4 + multi-image) ---- */
+@media (max-width: 760px) {
+  .msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .body-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .msg-card:is([data-type="carousel-v4"], [data-type="multi-image"], [data-type="imagemap"]) .preview-pane {
+    width: 100%;
+  }
+}
+
+/* ============================
+   MULTI-IMAGE (V4-style) — right-pane specifics
+   ============================
+   Shares the v4 frame (page list, image upload, accordion group, color row).
+   The accordions use a Select Button for image-action / button-action and
+   toggle switches inside the 宣傳標語 / 動作按鈕 accordions to enable each
+   section. Field-row + counter styling mirrors the v4 promo accordion but is
+   generalised so it applies to all multi-image acc-fields.
+   Matches Figma 7164:78735 / 7196:45521 / 7196:51206. */
+
+/* The bubble preview centers on its 300px max width, mirroring v3/v4. */
+.msg-card[data-type="multi-image"] .preview-pane {
+  display: flex;
+  justify-content: center;
+}
+.msg-card[data-type="multi-image"] .bubble {
+  width: 300px;
+  max-width: 100%;
+  position: relative;
+}
+
+/* Toggle switch — generic 40x24 pill used inside accordion bodies. */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 40px;
+  height: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-switch input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.toggle-switch .toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 999px;
+  transition: background 0.15s;
+}
+.toggle-switch .toggle-slider::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent);
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+}
+.toggle-switch input:focus-visible + .toggle-slider {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Toggle row inside an accordion body: label on the left, switch on the right. */
+.mi-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+}
+.mi-toggle-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+
+/* Reveal-block: hidden when the section's toggle is off. Inherits the
+   accordion-body gap rule from .v4-acc-group's .acc-body-inner. */
+.mi-fields-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mi-fields-block[hidden] { display: none; }
+
+/* Generic acc-field styling inside the multi-image accordions — same shape
+   as the v4 promo field (label on top, text input below, counter inline). */
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field[hidden] {
+  display: none;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-counter .acc-count { color: var(--accent); }
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-counter .acc-sep,
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .acc-text-counter .acc-max {
+  color: var(--text-2);
+  margin: 0 1px;
+}
+
+/* 動作按鈕 → 點擊行為 row: Select Button full width, value input below it.
+   Both share the .acc-field wrapper, so use a small top gap between the two
+   children. */
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .mi-btn-action-select {
+  margin-bottom: 6px;
+}
+.msg-card:is([data-type="multi-image"], [data-type="imagemap"]) .editor-pane-v4 .acc-field .mi-btn-action-value-wrap {
+  /* Inherits the standard acc-text-input-wrap styles — nothing extra needed. */
+}
+
+/* 圖片點擊行為 select-button: a small top gap separates it from the value
+   input that appears when type !== "none". */
+.msg-card[data-type="multi-image"] .mi-ia-value-field { margin-top: 0; }
+
+/* ============================================================================
+   v4 動作按鈕 Accordion (Figma 7161:56636)
+   - Standalone block: doesn't extend v2/v3 selectors so v3 stays untouched.
+   - Items render as separate rounded cards (gap, not joined into one shell).
+   - Header: drag handle | title+subtitle | trash | chevron.
+   - Body: 按鈕文字 input | 按鈕點擊行為 toggle+value | 文字/背景顏色 row + tools.
+   ============================================================================ */
+.msg-card[data-type="carousel-v4"] .btn-acc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-list:empty { display: none; }
+
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4.open {
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* ----- Header ----- */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-drag {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--text-2);
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-title.is-empty {
+  color: var(--text-1);
+  font-weight: 500;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-trash {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-1);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-trash:hover {
+  background: var(--surface-3);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-1);
+  flex-shrink: 0;
+}
+
+/* ----- Body ----- */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-body-inner {
+  background: #f8f9fd;
+  padding: 0 12px;
+  border-top: 0;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4.open .acc-body-inner {
+  padding: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-acc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+
+/* ----- 按鈕文字 / 按鈕點擊行為 value input ----- */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(24,39,75,0.08));
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-btn-text,
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .btn-value-input {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  padding: 0;
+  font-family: inherit;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-btn-text::placeholder,
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .btn-value-input::placeholder {
+  color: var(--text-placeholder);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-counter {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-counter .acc-count {
+  color: var(--accent);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-counter .acc-sep,
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .acc-text-counter .acc-max {
+  color: var(--text-2);
+  margin: 0 1px;
+}
+
+/* ----- 按鈕點擊行為 toggle ----- */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-action-toggle {
+  width: 100%;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-value-wrap {
+  margin-top: 6px;
+}
+
+/* ----- 文字 / 背景顏色 ----- */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-input {
+  display: flex;
+  align-items: stretch;
+  height: 36px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-color-prefix {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs, 0 1px 1px rgba(24,39,75,0.08));
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-color-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-color-hex {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+  outline: 0;
+  box-shadow: var(--shadow-xs, 0 1px 1px rgba(24,39,75,0.08));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-color-hex:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Joined icon button group (palette + swap) — sits flush with the color
+   inputs' baseline so both heights align at 36px. */
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tools {
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 36px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tool {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(24,39,75,0.08));
+  transition: background 0.12s, color 0.12s;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tool:hover {
+  background: var(--surface-3);
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tool + .v4-btn-color-tool {
+  border-left: 0;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tools .v4-btn-color-tool:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.msg-card[data-type="carousel-v4"] .btn-acc-item-v4 .v4-btn-color-tools .v4-btn-color-tool:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* ============================================================================
+   IMAGEMAP (圖文訊息)
+   Single image whose area can be split into clickable regions. Reuses the
+   v4 editor pane shell, accordion group, select button, image frame, alt
+   input, and toggle switch. Adds: preview header (label + toggle), bubble
+   with overlay grid, layout selector cards, region accordion items.
+   ============================================================================ */
+
+/* The im-bubble doesn't render the .bubble-body / hero stack other types use;
+   it's just an image + overlay grid, so reset some inherited defaults. These
+   rules are intentionally unscoped (no data-type prefix) so they also style
+   the cloned bubble inside .preview-clone in the right preview sidebar. */
+.im-bubble {
+  position: relative;
+  width: var(--bubble-width);
+  background: #f3f4f6;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  display: block;
+}
+
+.im-bubble-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.im-bubble-image[hidden] { display: none; }
+
+.im-bubble-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-placeholder);
+  background: var(--surface-3);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.im-bubble-empty svg {
+  width: 36px;
+  height: 36px;
+  opacity: 0.65;
+}
+
+/* Overlay grid: covers the image; each cell has a semi-transparent dark wash
+   with a small letter badge in the top-left corner. The accent-colored
+   border between cells visualises the split. */
+.im-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  pointer-events: none;
+}
+.im-overlay[hidden] { display: none; }
+.im-overlay-cell {
+  position: relative;
+  border: 1px solid var(--accent);
+  background: rgba(16, 24, 40, 0.55);
+  padding: 4px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.im-overlay-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+
+/* Preview header: label + toggle, sitting above the bubble. */
+.msg-card[data-type="imagemap"] .im-preview-pane {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.msg-card[data-type="imagemap"] .im-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  min-height: 36px;
+}
+.msg-card[data-type="imagemap"] .im-preview-header-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+
+/* The right editor pane uses .editor-pane-v4, so it picks up the 20px gap
+   between sections. The layout-cards section sits between image-form and the
+   region accordion list. */
+.msg-card[data-type="imagemap"] .im-layout-cards {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.msg-card[data-type="imagemap"] .im-layout-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-1);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.12s, color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+.msg-card[data-type="imagemap"] .im-layout-card:hover:not(.is-selected) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.msg-card[data-type="imagemap"] .im-layout-card.is-selected {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  padding: 11px;
+}
+.msg-card[data-type="imagemap"] .im-layout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+.msg-card[data-type="imagemap"] .im-layout-icon svg {
+  display: block;
+}
+.msg-card[data-type="imagemap"] .im-layout-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+
+/* Region accordion: per-region action editor. Group shell + items inherit
+   .v4-acc-group styling. The im-acc-icon is a 20px layout-grid icon next to
+   the title block. */
+.msg-card[data-type="imagemap"] .im-regions-section[hidden] { display: none; }
+.msg-card[data-type="imagemap"] .im-acc-group { width: 100%; }
+.msg-card[data-type="imagemap"] .im-acc-item .im-acc-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1);
+}
+.msg-card[data-type="imagemap"] .im-acc-item .im-acc-icon svg { display: block; }
+
+/* The region accordion body uses .acc-field for the value input — already
+   covered by the shared multi-image/imagemap rules. Add a small top gap
+   between the select-button and the value field. */
+.msg-card[data-type="imagemap"] .editor-pane-v4 .im-region-value-field { margin-top: 0; }
+
+/* Editor pane uses .editor-pane-v4 styling but is also a top-level flex
+   item — strip the carry-over min-width from .editor-pane so the bubble's
+   fixed width doesn't squeeze the editor below its content. */
+.msg-card[data-type="imagemap"] .im-editor-pane {
+  flex: 1;
+  min-width: 0;
+}

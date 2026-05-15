@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE 訊息格式編輯器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="messages-container" id="messagesContainer"></div>
+
+  <!-- Always-visible add message panel -->
+  <div class="add-msg-panel" id="addMsgPanel">
+    <div class="add-msg-panel-label">新增訊息</div>
+    <div class="add-msg-panel-grid">
+
+      <div class="add-msg-card" data-msg-type="text">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>
+        <span>文字訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="image">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        <span>圖片訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="video">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        <span>影片訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="audio">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        <span>音訊訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="sticker">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 11.5c0 5.247-4.253 9.5-9.5 9.5S2 16.747 2 11.5 6.253 2 11.5 2 21 6.253 21 11.5z"/><path d="M21 12h-6a3 3 0 0 0-3 3v6"/></svg>
+        <span>貼圖訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="carousel-v4">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="13" height="16" rx="1.5"/><rect x="18" y="4" width="3" height="16" rx="1"/></svg>
+        <span>多頁訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="multi-image">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+        <span>多圖訊息</span>
+      </div>
+
+      <div class="add-msg-card" data-msg-type="imagemap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+        <span>圖文訊息</span>
+      </div>
+
+      <div class="add-msg-card archived" data-msg-type="carousel-v3">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+        <span>多頁訊息 v3</span>
+        <em class="add-msg-archived-tag">Archived</em>
+      </div>
+
+      <div class="add-msg-card archived" data-msg-type="carousel">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="6" width="14" height="12" rx="2"/><rect x="18" y="6" width="4" height="12" rx="1"/></svg>
+        <span>多頁訊息</span>
+        <em class="add-msg-archived-tag">Archived</em>
+      </div>
+
+      <div class="add-msg-card archived" data-msg-type="carousel-v2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+        <span>多頁訊息 v2</span>
+        <em class="add-msg-archived-tag">Archived</em>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Right preview sidebar (擬真 LINE preview, mirrors editor messages) -->
+<aside class="preview-sidebar" id="previewSidebar">
+  <div class="preview-sidebar-title">訊息格式預覽</div>
+  <div class="preview-list" id="previewList"></div>
+</aside>
+
+<!-- Message-type picker (opened by addMessageBtn) -->
+<div class="message-type-menu" id="messageTypeMenu">
+  <div class="menu-item" data-msg-type="text">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>
+    文字
+  </div>
+  <div class="menu-item" data-msg-type="image">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    圖片
+  </div>
+  <div class="menu-item" data-msg-type="video">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    影片
+  </div>
+  <div class="menu-item" data-msg-type="audio">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    音訊
+  </div>
+  <div class="menu-item" data-msg-type="sticker">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5c0 5.247-4.253 9.5-9.5 9.5S2 16.747 2 11.5 6.253 2 11.5 2 21 6.253 21 11.5z"/><path d="M21 12h-6a3 3 0 0 0-3 3v6"/></svg>
+    貼圖
+  </div>
+  <div class="menu-item archived" data-msg-type="carousel">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><rect x="18" y="6" width="4" height="12" rx="1"/></svg>
+    多頁訊息<span class="archived-badge">Archived</span>
+  </div>
+  <div class="menu-item archived" data-msg-type="carousel-v2">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+    多頁訊息 v2<span class="archived-badge">Archived</span>
+  </div>
+  <div class="menu-item" data-msg-type="carousel-v4">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="13" height="16" rx="1.5"/><rect x="18" y="4" width="3" height="16" rx="1"/></svg>
+    多頁訊息
+  </div>
+  <div class="menu-item" data-msg-type="multi-image">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+    多圖訊息
+  </div>
+  <div class="menu-item" data-msg-type="imagemap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+    圖文訊息
+  </div>
+  <div class="menu-item archived" data-msg-type="carousel-v3">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+    多頁訊息 v3<span class="archived-badge">Archived</span>
+  </div>
+</div>
+
+<!-- Image type menu (used by carousel cards' hero) -->
+<div class="image-type-menu" id="imageTypeMenu">
+  <div class="menu-item" data-img-type="image">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    一般圖片
+  </div>
+  <div class="menu-item" data-img-type="animated">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    動態圖片
+  </div>
+</div>
+
+<!-- Body add menu (used by carousel cards' body) -->
+<div class="body-add-menu" id="bodyAddMenu">
+  <div class="menu-item" data-add="title">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+    標題
+  </div>
+  <div class="menu-item" data-add="desc">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>
+    說明
+  </div>
+  <div class="menu-item" data-add="price">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    價格
+  </div>
+</div>
+
+<!-- Combo color popover -->
+<div class="popover-backdrop" id="backdrop"></div>
+<div class="popover" id="colorPopover">
+  <div class="popover-title" id="popoverTitle">配色</div>
+  <div class="popover-button-fields" id="popoverButtonFields" hidden>
+    <select class="select-input" id="popoverActionSelect">
+      <option value="message">文字</option>
+      <option value="uri">連結</option>
+    </select>
+    <input type="text" class="text-input" id="popoverValueInput" placeholder="使用者點擊後傳送的文字">
+  </div>
+  <div class="combo-presets" id="comboPresets"></div>
+  <div class="combo-recents-wrap" id="comboRecentsWrap" hidden>
+    <div class="popover-subtitle">常用</div>
+    <div class="combo-recents" id="comboRecents"></div>
+  </div>
+  <div class="combo-customs">
+    <div class="combo-custom-block">
+      <div class="label">文字顏色</div>
+      <div class="combo-custom-input">
+        <input type="color" class="native-color-input" id="fgNative">
+        <input type="text" class="hex-input" id="fgHex" maxlength="7" placeholder="#000000">
+      </div>
+    </div>
+    <div class="combo-custom-block">
+      <div class="label">背景顏色</div>
+      <div class="combo-custom-input">
+        <input type="color" class="native-color-input" id="bgNative">
+        <input type="text" class="hex-input" id="bgHex" maxlength="7" placeholder="#FFFFFF">
+      </div>
+    </div>
+    <button type="button" class="combo-swap-btn" id="comboSwap" title="反轉文字／背景顏色" aria-label="反轉顏色">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="17 1 21 5 17 9"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+        <polyline points="7 23 3 19 7 15"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Shared file input. The change handler uses state.activeMessageId +
+     a per-event accept attr to dispatch back to the right card/type. -->
+<input type="file" id="fileInput" hidden>
+
+<div class="hint" id="hint"></div>
+
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/alignment.js"></script>
+<script src="js/types/text.js"></script>
+<script src="js/types/image.js"></script>
+<script src="js/types/video.js"></script>
+<script src="js/types/audio.js"></script>
+<script src="js/types/sticker.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/hero.js"></script>
+<script src="js/body.js"></script>
+<script src="js/buttons.js"></script>
+<script src="js/types/carousel.js"></script>
+<script src="js/types/carousel-v2.js"></script>
+<script src="js/types/carousel-v3.js"></script>
+<script src="js/types/carousel-v4.js"></script>
+<script src="js/types/multi-image.js"></script>
+<script src="js/types/imagemap.js"></script>
+<script src="js/color-popover.js"></script>
+<script src="js/button-color-overlay.js"></script>
+<script src="js/messages.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
